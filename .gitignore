@@ -3,6 +3,7 @@
 #
 .vertx
 *.log
+non-public-conf.json
 
 # Editor directories and files
 .idea
