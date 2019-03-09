@@ -4,17 +4,16 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.client.WebClient;
-import me.piepers.super11.reactivex.domain.CompetitionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
@@ -22,8 +21,6 @@ public class HttpServerVerticle extends AbstractVerticle {
     private int port;
     private WebClient webClient;
     private io.vertx.reactivex.core.Vertx rxVertx;
-    private List<String> cookies = new ArrayList<>();
-    private CompetitionService competitionService;
 
     @Override
     public void init(Vertx vertx, Context context) {
@@ -35,8 +32,6 @@ public class HttpServerVerticle extends AbstractVerticle {
                         setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36")
                         .setMaxPoolSize(10)
                         .setLogActivity(false));
-
-        this.competitionService = CompetitionService.createProxy(rxVertx);
     }
 
     @Override
@@ -44,7 +39,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         Router router = Router.router(vertx);
 
         Router subRouter = Router.router(vertx);
-        subRouter.route(HttpMethod.POST, "/start").handler(this::startHandler);
+        subRouter.route(HttpMethod.GET, "/standings").handler(this::competitionHandler);
         router.mountSubRouter("/api", subRouter);
 
 
@@ -57,14 +52,21 @@ public class HttpServerVerticle extends AbstractVerticle {
                         throwable -> future.fail(throwable));
     }
 
-    private void startHandler(RoutingContext routingContext) {
-        competitionService
-                .rxFetchLatestCompetitionStandings()
-                .subscribe(competition -> routingContext
+    private void competitionHandler(RoutingContext routingContext) {
+        vertx
+                .eventBus()
+                .<JsonObject>rxSend("get.competition", new JsonObject())
+                .subscribe(result -> routingContext
                                 .response()
-                                .putHeader("Content-Type", "application/json")
-                                .end(competition.toJson().encode()),
-                        throwable -> routingContext.fail(throwable));
-
+                                .setStatusCode(200)
+                                .putHeader("Content-Type", "application/json; charset=UTF-8")
+                                .end(result.body().encode()),
+                        throwable -> routingContext
+                                .response()
+                                .setStatusCode(500)
+                                .putHeader("Content-Type", "application/json; charset=UTF-8")
+                                .end(new JsonObject().put("Error", throwable
+                                        .getMessage())
+                                        .encode(), StandardCharsets.UTF_8.name()));
     }
 }

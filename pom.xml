@@ -11,7 +11,8 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>super-11-backend</module>    
+    <module>super-11-backend</module>
+    <module>super-11-ui</module>
   </modules>
 
 </project>

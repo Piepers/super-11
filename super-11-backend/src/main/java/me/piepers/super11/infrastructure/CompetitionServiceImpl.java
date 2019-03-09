@@ -111,29 +111,46 @@ public class CompetitionServiceImpl implements CompetitionService {
         String xGameGroup = profcoachConfig.getString("x_game_group");
 
         accessKeyResult
-                .flatMap(accessKey -> webClient
-                        .get(port, gameApiHost, gameApiUrl)
-                        .ssl(true)
-                        .bearerTokenAuthentication(accessKey)
-                        .putHeader("Content-Type", "application/json")
-                        .putHeader("X-Client-Game", xClientGame)
-                        .putHeader("X-Game-Group", xGameGroup)
-                        .rxSend())
+                .flatMap(accessKey -> this.sendRequestCompetitionStandings(gameApiHost, gameApiUrl, port, accessKey, xClientGame, xGameGroup))
                 .subscribe(httpResponse -> {
                             if (httpResponse.statusCode() == 200) {
                                 Competition competition = new Competition(httpResponse.bodyAsJsonObject());
                                 result.handle(Future.succeededFuture(competition));
+                            } else if (httpResponse.statusCode() == 401) {
+                                LOGGER.debug("Unable to obtain competition standing due to invalid access code. Retrieving new one.");
+                                this.requestAccessKey()
+                                        .flatMap(accessKey -> this.sendRequestCompetitionStandings(gameApiHost, gameApiUrl, port, accessKey, xClientGame, xGameGroup))
+                                        .subscribe(secondTryHttpResponse -> {
+                                            if (secondTryHttpResponse.statusCode() == 200) {
+                                                LOGGER.debug("Retrieved competition after having fetched a new access key.");
+                                                Competition competition = new Competition(httpResponse.bodyAsJsonObject());
+                                                result.handle(Future.succeededFuture(competition));
+                                            } else {
+                                                // We won't try to get another access key again since something else must be wrong if a second pass didn't give us the expected result.
+                                                LOGGER.error("After having retrieved another access key, we could not get the competition standings for our league.");
+                                                result.handle(Future.failedFuture(new ServiceException(secondTryHttpResponse.statusCode(), secondTryHttpResponse.statusMessage())));
+                                            }
+
+                                        }, throwable -> result.handle(Future.failedFuture(throwable)));
                             } else {
-                                // FIXME: implement retry so that a new access key is obtained in case it was no longer valid.
-                                LOGGER.debug("Unable to obtain competition standing. Statuscode was: {}. Get a new access key?", httpResponse.statusCode());
+                                LOGGER.error("Unexpected access code received. Unable to retrieve competition standings. Code was: {}", httpResponse.statusCode());
                                 result.handle(Future.failedFuture(new ServiceException(httpResponse.statusCode(), httpResponse.statusMessage())));
                             }
                         },
                         throwable -> result.handle(Future.failedFuture(throwable)));
 
 
-        // Make the request. If we receive an "unauthorized" response: fetch the key and do the response again.
+    }
 
+    private Single<HttpResponse<Buffer>> sendRequestCompetitionStandings(final String gameApiHost, final String gameApiUrl, final Integer port, final String accessKey, final String xClientGame, final String xGameGroup) {
+        return webClient
+                .get(port, gameApiHost, gameApiUrl)
+                .ssl(true)
+                .bearerTokenAuthentication(accessKey)
+                .putHeader("Content-Type", "application/json")
+                .putHeader("X-Client-Game", xClientGame)
+                .putHeader("X-Game-Group", xGameGroup)
+                .rxSend();
     }
 
     /**
@@ -163,7 +180,6 @@ public class CompetitionServiceImpl implements CompetitionService {
         LOGGER.debug("Requesting access key starting with host: {}, port: {} and url: {}", oAuthStartHost, oAuthStartPort, oAuthStartUrl);
 
         AuthRequestBody body = AuthRequestBody.fromConfiguration(authConfig);
-        LOGGER.debug("Using this body on initial request: \n{}", body.toJson().encodePrettily());
 
         return webClient
                 .post(oAuthStartPort, oAuthStartHost, oAuthStartUrl)
