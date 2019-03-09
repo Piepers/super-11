@@ -1,7 +1,9 @@
 <template>
     <div class="hello">
         <!--{{name}}-->
-        <li v-for="draft in drafts">{{draft.managerName}}</li>
+        <ul>
+        <li v-for="draft in drafts" v-bind:key="draft.id">{{draft.managerName}}</li>
+        </ul>
         <!--<button v-on:click="changeName" v-bind:disabled="btnState">Change name</button>-->
     </div>
 </template>
