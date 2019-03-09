@@ -60,6 +60,8 @@ public class HttpServerVerticle extends AbstractVerticle {
                                 .response()
                                 .setStatusCode(200)
                                 .putHeader("Content-Type", "application/json; charset=UTF-8")
+                                // FIXME: make more restrict in production.
+                                .putHeader("Access-Control-Allow-Origin", "*")
                                 .end(result.body().encode()),
                         throwable -> routingContext
                                 .response()
