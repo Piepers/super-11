@@ -1,10 +1,94 @@
 <template>
-    <div class="hello">
-        <!--{{name}}-->
-        <ul>
-        <li v-for="draft in drafts" v-bind:key="draft.id">{{draft.managerName}}</li>
-        </ul>
-        <!--<button v-on:click="changeName" v-bind:disabled="btnState">Change name</button>-->
+    <div>
+        <article>
+            <table align="center">
+                <thead>
+                <tr>
+                    <td colspan="4" class="header">
+                        <h1>Super 11 Uden Standings</h1>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Pos</th>
+                    <th>Team</th>
+                    <th>R</th>
+                    <th>Pts</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!--<tr>-->
+                <!--<td>-->
+                <!--1-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--test-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--0-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--100-->
+                <!--</td>-->
+                <!--</tr>-->
+                <!--<tr>-->
+                <!--<td>-->
+                <!--2-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--test-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--0-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--100-->
+                <!--</td>-->
+                <!--</tr>-->
+                <!--<tr>-->
+                <!--<td>-->
+                <!--3-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--test-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--0-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--100-->
+                <!--</td>-->
+                <!--</tr>-->
+                <!--<tr>-->
+                <!--<td>-->
+                <!--4-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--test-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--0-->
+                <!--</td>-->
+                <!--<td>-->
+                <!--100-->
+                <!--</td>-->
+                <!--</tr>-->
+                <tr v-for="draft in drafts">
+                    <td>
+                        {{draft.rank}}
+                    </td>
+                    <td>
+                        {{draft.draftName}}
+                    </td>
+                    <td>
+                        {{draft.points}}
+                    </td>
+                    <td>
+                        {{draft.totalPoints}}
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </article>
     </div>
 </template>
 
@@ -13,7 +97,7 @@
         name: 'Standings',
         data() {
             return {
-                drafts:[]
+                drafts: []
             }
         },
         mounted() {
@@ -28,21 +112,37 @@
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-    h3 {
-        margin: 40px 0 0;
+    table {
+        border: 1px solid black;
+        border-collapse: collapse;
+        opacity: 0.95;
+        width: 85%;
     }
 
-    ul {
-        list-style-type: none;
-        padding: 0;
+    th {
+        background: #a70000;
+        color: white;
     }
 
-    li {
-        display: inline-block;
-        margin: 0 10px;
+    tr:nth-child(even) {
+        background: #e8e8e8;
     }
 
-    a {
-        color: #42b983;
+    tr:nth-child(odd) {
+        background: white;
+    }
+
+    .header {
+        background: #005cb7;
+        color: white;
+    }
+
+    th, td {
+        text-align: center;
+        padding: 10px;
+    }
+
+    article {
+        overflow-x: auto;
     }
 </style>
