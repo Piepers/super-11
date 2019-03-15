@@ -12,6 +12,7 @@ import io.vertx.core.json.JsonObject;
 @DataObject
 public class Draft {
     private final String id;
+    private final String draftName;
     private final Long totalPoints;
     private final Boolean isUser;
     private final Integer rank;
@@ -26,6 +27,7 @@ public class Draft {
 
     public Draft(JsonObject jsonObject) {
         this.id = jsonObject.getString("id");
+        this.draftName = jsonObject.getString("draftName");
         this.totalPoints = jsonObject.getLong("totalPoints");
         this.isUser = jsonObject.getBoolean("isUser");
         this.rank = jsonObject.getInteger("rank");
@@ -41,6 +43,10 @@ public class Draft {
 
     public String getId() {
         return id;
+    }
+
+    public String getDraftName() {
+        return draftName;
     }
 
     public Long getTotalPoints() {
@@ -91,6 +97,7 @@ public class Draft {
     public String toString() {
         return "Draft{" +
                 "id='" + id + '\'' +
+                ", draftName='" + draftName + '\'' +
                 ", totalPoints=" + totalPoints +
                 ", isUser=" + isUser +
                 ", rank=" + rank +
