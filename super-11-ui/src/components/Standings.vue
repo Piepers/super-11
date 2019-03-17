@@ -16,7 +16,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="draft in drafts">
+                <tr v-for="draft in drafts" v-bind:key="draft.id">
                     <td>
                         {{draft.rank}}
                     </td>
@@ -57,14 +57,14 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
     table {
-        border: 1px solid black;
+        border: 3px solid white;
         border-collapse: collapse;
         opacity: 0.95;
         width: 85%;
     }
 
     th {
-        background: #a70000;
+        background: #41B883;
         color: white;
     }
 
@@ -77,7 +77,7 @@
     }
 
     .header {
-        background: #005cb7;
+        background: #35495E;
         color: white;
     }
 
