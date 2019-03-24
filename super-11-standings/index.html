@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="icon" href="images/favicon.ico">
+    <link rel="stylesheet" href="css/style.css">
+    <title>Super 11 Uden Standings</title>
+</head>
+<body>
+<noscript>
+    <strong>We're sorry but this application doesn't work properly without JavaScript enabled. Please enable it to
+        continue.</strong>
+</noscript>
+<script>
+
+    function load() {
+        const apiUrl = "http://localhost:8080/api";
+        fetch(apiUrl + "/standings")
+            .then(response => response.json())
+            .then((data) => {
+                let d = data.data.drafts;
+                console.log(d);
+                document.getElementById("header-td").innerHTML = `<h1>Super 11 Uden Standings</h1>`;
+                // Populate the table with the data from the fetch action.
+                let output="";
+                d.forEach(draft => {
+                    output += `<tr><td>${draft.rank}</td><td>${draft.draftName}</td><td>${draft.points}</td><td>${draft.totalPoints}</td></tr>`;
+                })
+
+                document.getElementById("standings-body").innerHTML = output;
+            })
+    }
+
+    window.onload = load;
+</script>
+<article>
+    <table id="standings" align="center">
+        <thead>
+        <tr>
+            <td id="header-td" colspan="4" class="header">
+                <!--<h1>Super 11 Uden Standings</h1>-->
+                <h1>Loading data, please stand by...</h1>
+            </td>
+        </tr>
+        <tr>
+            <th>Pos</th>
+            <th>Team</th>
+            <th>R</th>
+            <th>Pts</th>
+        </tr>
+        </thead>
+        <tbody id="standings-body">
+        <!-- Placeholder for the table content that we want to populate with the use of JavaScript (when the body loads) -->
+        <tr>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                &nbsp;
+            </td>
+            <td>
+                &nbsp;
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</article>
+</body>
+</html>

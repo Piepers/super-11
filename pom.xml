@@ -13,6 +13,7 @@
   <modules>
     <module>super-11-backend</module>
     <module>super-11-ui</module>
+      <module>super-11-provisioning</module>
   </modules>
 
 </project>
