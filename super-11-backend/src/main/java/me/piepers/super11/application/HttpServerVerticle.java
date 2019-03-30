@@ -4,16 +4,21 @@ import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
 import io.vertx.reactivex.ext.web.client.WebClient;
+import me.piepers.super11.application.model.StandingsDto;
+import me.piepers.super11.domain.Competition;
+import me.piepers.super11.domain.Draft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
@@ -56,13 +61,16 @@ public class HttpServerVerticle extends AbstractVerticle {
         vertx
                 .eventBus()
                 .<JsonObject>rxSend("get.competition", new JsonObject())
+                .map(result -> new Competition(result.body()))
+                .map(competition -> competition.getData().getDrafts().stream().map(draft -> StandingsDto.from(draft)).collect(Collectors.toList()))
+                .map(list -> new JsonObject().put("drafts", new JsonArray(list)))
                 .subscribe(result -> routingContext
                                 .response()
                                 .setStatusCode(200)
                                 .putHeader("Content-Type", "application/json; charset=UTF-8")
                                 // FIXME: make more restrict in production.
                                 .putHeader("Access-Control-Allow-Origin", "*")
-                                .end(result.body().encode()),
+                                .end(result.encode()),
                         throwable -> routingContext
                                 .response()
                                 .setStatusCode(500)

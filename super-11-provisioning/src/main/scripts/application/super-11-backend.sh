@@ -14,13 +14,13 @@ LOG_LOCATION="/var/log/super-11-backend/"
 DATA_LOCATION="/var/super-11-backend/"
 CONFIG_LOCATION="/etc/super-11-backend/"
 JAR_NAME="super-11-backend.jar"
-START_COMMAND="java -Dvertx-config-path=${CONFIG_LOCATTION}config.json -Dlogback.configurationFile=${CONFIG_LOCATION}logback.xml -jar ${JAR_NAME} run me.piepers.super11.application.Super11Application"
+START_COMMAND="java -Dvertx-config-path=${CONFIG_LOCATION}config.json -Dlogback.configurationFile=${CONFIG_LOCATION}logback.xml -jar ${JAR_NAME} run me.piepers.super11.application.Super11Application"
 STOP_COMMAND="ps ax | egrep 'super-11-backend\.jar' | egrep '${SE_PID}' | egrep -v 'egrep' | egrep -v 'bash' | awk '{ print $1 }' | xargs --no-run-if-empty kill -15"
 SCRIPT="cd ${JAR_LOCATION} && ${START_COMMAND}"
 STOP_SCRIPT="cd ${JAR_LOCATION} && ${STOP_COMMAND}"
 # FIXME: should be a service or application account on the server.
 RUNAS="bas"
-SUPER_11_BACKEND_CACHE ="${DATA_LOCATION}/.super-11-cache"
+SUPER_11_BACKEND_CACHE="${DATA_LOCATION}/.super-11-cache"
 
 PIDFILE=/var/run/super-11-backend.pid
 SUPER_11_BACKEND_LOG_FILE=${LOG_LOCATION}super-11-backend.log
@@ -34,12 +34,10 @@ start() {
   fi
 
   # Setting the permissions explicitly
-  rm -rf ${SUPER_11_BACKEND_CACHE} ${PIDFILE} ${SUPER_11_BACKEND_LOG_FILE}
+  rm -rf ${SUPER_11_BACKEND_CACHE} ${PIDFILE}
   mkdir -p ${SUPER_11_BACKEND_CACHE}
-  touch ${SUPER_11_BACKEND_LOG_FILE}
-  chmod 666 ${SUPER_11_BACKEND_LOG_FILE}
-  chown -R ${RUNAS} ${SUPER_11_BACKEND_CACHE} ${SUPER_11_BACKEND_LOG_FILE}
-  chgrp -R ${RUNAS} ${SUPER_11_BACKEND_CACHE} ${SUPER_11_BACKEND_LOG_FILE}
+  chown -R ${RUNAS} ${SUPER_11_BACKEND_CACHE}
+  chgrp -R ${RUNAS} ${SUPER_11_BACKEND_CACHE}
 
   echo 'Starting super-11-backend…' >&2
   local CMD="$SCRIPT & echo \$!"

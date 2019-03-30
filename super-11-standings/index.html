@@ -20,8 +20,8 @@
         fetch(apiUrl + "/standings")
             .then(response => response.json())
             .then((data) => {
-                let d = data.data.drafts;
-                console.log(d);
+                console.log("Data is: " + data)
+                let d = data.drafts;
                 document.getElementById("header-td").innerHTML = `<h1>Super 11 Uden Standings</h1>`;
                 // Populate the table with the data from the fetch action.
                 let output="";
