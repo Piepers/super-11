@@ -3,17 +3,20 @@ package me.piepers.super11.application;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.client.WebClientOptions;
+import io.vertx.ext.stomp.StompServerOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.ext.stomp.DestinationFactory;
+import io.vertx.reactivex.ext.stomp.StompServer;
+import io.vertx.reactivex.ext.stomp.StompServerHandler;
 import io.vertx.reactivex.ext.web.Router;
 import io.vertx.reactivex.ext.web.RoutingContext;
-import io.vertx.reactivex.ext.web.client.WebClient;
 import me.piepers.super11.application.model.StandingsDto;
 import me.piepers.super11.domain.Competition;
-import me.piepers.super11.domain.Draft;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +27,6 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
     private int port;
-    private WebClient webClient;
     private io.vertx.reactivex.core.Vertx rxVertx;
 
     @Override
@@ -32,29 +34,62 @@ public class HttpServerVerticle extends AbstractVerticle {
         super.init(vertx, context);
         this.rxVertx = new io.vertx.reactivex.core.Vertx(vertx);
         this.port = 8080;
-        this.webClient = WebClient.create(rxVertx,
-                new WebClientOptions().
-                        setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36")
-                        .setMaxPoolSize(10)
-                        .setLogActivity(false));
     }
 
     @Override
     public void start(Future<Void> future) {
-        Router router = Router.router(vertx);
 
+        Router router = Router.router(vertx);
         Router subRouter = Router.router(vertx);
         subRouter.route(HttpMethod.GET, "/standings").handler(this::competitionHandler);
         router.mountSubRouter("/api", subRouter);
 
+        StompServerOptions stompServerOptions = new StompServerOptions()
+                .setPort(-1)
+                .setWebsocketBridge(true)
+                .setWebsocketPath("/stomp");
+
+        StompServer stompServer = StompServer
+                .create(vertx, stompServerOptions)
+                .handler(StompServerHandler.create(vertx));
+
+//                .rxListen()
+//                .doOnSuccess(stompServer -> LOGGER.debug("Stomp server has been started successfully"))
+//                .doOnError(throwable -> LOGGER.debug("Something went wrong while deploying the stomp server", throwable))
+//                .doOnError(throwable -> throwable.printStackTrace())
+//                .flatMap(stompServer ->
+//                        this.vertx
+//                                .createHttpServer(new HttpServerOptions()
+//                                        .setWebsocketSubProtocols("v10.stomp, v11.stomp, v12.stomp"))
+//                                .websocketHandler(stompServer.webSocketHandler())
+//                                .requestHandler(router)
+//                                .rxListen(this.port))
+//                .doOnSuccess(result -> LOGGER.debug("Http Server has been started on port {}", this.port))
+//                .doOnSuccess(result -> rxVertx.setPeriodic(3000, this::handleTimer))
+//                .doOnError(throwable -> LOGGER.error("Something went wrong while starting the HTTP server"))
+//                .doOnError(throwable -> throwable.printStackTrace())
+//                .subscribe(result ->
+//                                future.complete(),
+//                        throwable -> future.fail(throwable));
 
         this.vertx
-                .createHttpServer()
+                .createHttpServer(new HttpServerOptions().setWebsocketSubProtocols("v10.stomp, v11.stomp, v12.stomp"))
+                .websocketHandler(stompServer.webSocketHandler())
                 .requestHandler(router)
                 .rxListen(this.port)
                 .doOnSuccess(result -> LOGGER.debug("Http Server has been started on port {}", this.port))
-                .subscribe(result -> future.complete(),
+                .doOnSuccess(result -> rxVertx.setPeriodic(3000, this::handleTimer))
+                .subscribe(result ->
+                                future.complete(),
                         throwable -> future.fail(throwable));
+    }
+
+    private void handleTimer(Long timerId) {
+        LOGGER.debug("Publishing something to the stomp address...");
+        rxVertx
+                .eventBus()
+                .publish("update.standings",
+                        new JsonObject().put("test", "test contents"), new DeliveryOptions().addHeader("foo", "bar"));
     }
 
     private void competitionHandler(RoutingContext routingContext) {

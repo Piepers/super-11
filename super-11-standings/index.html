@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <link rel="icon" href="images/favicon.ico">
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/stomp.min.js"></script>
     <title>Super 11 Uden Standings</title>
 </head>
 <body>
@@ -15,12 +16,22 @@
 </noscript>
 <script>
 
+    var url = "ws://localhost:8080/stomp";
+    var client = Stomp.client(url);
+    var callback = function(frame) {
+        console.log("Received a frame: " + frame);
+    };
+
+    client.connect({}, function() {
+        var subscription = client.subscribe("update.standings", callback);
+
+    })
+
     function load() {
         const apiUrl = "http://localhost:8080/api";
         fetch(apiUrl + "/standings")
             .then(response => response.json())
             .then((data) => {
-                console.log("Data is: " + data)
                 let d = data.drafts;
                 document.getElementById("header-td").innerHTML = `<h1>Super 11 Uden Standings</h1>`;
                 // Populate the table with the data from the fetch action.

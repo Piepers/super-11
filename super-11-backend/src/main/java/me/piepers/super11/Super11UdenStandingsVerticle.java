@@ -46,7 +46,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
                 .rxFetchLatestCompetitionStandings()
                 .doOnSuccess(competition -> this.competition = competition)
                 .subscribe(competition -> future.complete(),
-                throwable -> future.fail(throwable));
+                        throwable -> future.fail(throwable));
 
         vertx
                 .eventBus()
@@ -65,6 +65,8 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
         // Populate/update the competition object with the contents from the api.
         competitionService
                 .rxFetchLatestCompetitionStandings()
+                .doOnSuccess(competition -> LOGGER.debug("Pusblishing updated competition to the event bus..."))
+                .doOnSuccess(competition -> vertx.eventBus().publish("competition.update", competition))
                 .subscribe(competition -> this.competition = competition,
                         throwable -> LOGGER.error("Unable to fetch competition data."));
     }
