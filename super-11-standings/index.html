@@ -28,28 +28,30 @@
     var client = Stomp.client(url);
     var callback = function(frame) {
         console.log("Received a frame: " + frame);
+        console.log("The body of the frame is: " + frame.body);
     };
 
     client.connect({}, function() {
-        var subscription = client.subscribe("update.standings", callback);
-
+        var subscription = client.subscribe("update-standings", callback);
     })
 
     function load() {
         const apiUrl = "http://localhost:8080/api";
         fetch(apiUrl + "/standings")
             .then(response => response.json())
-            .then((data) => {
-                let d = data.drafts;
-                document.getElementById("header-td").innerHTML = `<h1>Super 11 Uden Standings</h1>`;
-                // Populate the table with the data from the fetch action.
-                let output="";
-                d.forEach(draft => {
-                    output += `<tr><td>${draft.rank}</td><td>${draft.draftName}</td><td>${draft.points}</td><td>${draft.totalPoints}</td></tr>`;
-                })
+            .then(processData)
+    }
 
-                document.getElementById("standings-body").innerHTML = output;
-            })
+    function processData(data) {
+        let d = data.drafts;
+        document.getElementById("header-td").innerHTML = `<h1>Super 11 Uden Standings</h1>`;
+        // Populate the table with the data from the fetch action.
+        let output="";
+        d.forEach(draft => {
+            output += `<tr><td>${draft.rank}</td><td>${draft.draftName}</td><td>${draft.points}</td><td>${draft.totalPoints}</td></tr>`;
+        })
+
+        document.getElementById("standings-body").innerHTML = output;
     }
 
     window.onload = load;

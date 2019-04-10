@@ -8,9 +8,10 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.bridge.PermittedOptions;
+import io.vertx.ext.stomp.BridgeOptions;
 import io.vertx.ext.stomp.StompServerOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
-import io.vertx.reactivex.ext.stomp.DestinationFactory;
 import io.vertx.reactivex.ext.stomp.StompServer;
 import io.vertx.reactivex.ext.stomp.StompServerHandler;
 import io.vertx.reactivex.ext.web.Router;
@@ -28,6 +29,7 @@ public class HttpServerVerticle extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
     private int port;
     private io.vertx.reactivex.core.Vertx rxVertx;
+    public static final String UPDATE_STOMP_DESTINATION = "update-standings";
 
     @Override
     public void init(Vertx vertx, Context context) {
@@ -38,39 +40,22 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> future) {
-
-        Router router = Router.router(vertx);
-        Router subRouter = Router.router(vertx);
-        subRouter.route(HttpMethod.GET, "/standings").handler(this::competitionHandler);
-        router.mountSubRouter("/api", subRouter);
-
         StompServerOptions stompServerOptions = new StompServerOptions()
                 .setPort(-1)
                 .setWebsocketBridge(true)
                 .setWebsocketPath("/stomp");
 
+        BridgeOptions bridgeOptions = new BridgeOptions()
+                .addOutboundPermitted(new PermittedOptions().setAddress(UPDATE_STOMP_DESTINATION));
+
         StompServer stompServer = StompServer
                 .create(vertx, stompServerOptions)
-                .handler(StompServerHandler.create(vertx));
+                .handler(StompServerHandler.create(vertx).bridge(bridgeOptions));
 
-//                .rxListen()
-//                .doOnSuccess(stompServer -> LOGGER.debug("Stomp server has been started successfully"))
-//                .doOnError(throwable -> LOGGER.debug("Something went wrong while deploying the stomp server", throwable))
-//                .doOnError(throwable -> throwable.printStackTrace())
-//                .flatMap(stompServer ->
-//                        this.vertx
-//                                .createHttpServer(new HttpServerOptions()
-//                                        .setWebsocketSubProtocols("v10.stomp, v11.stomp, v12.stomp"))
-//                                .websocketHandler(stompServer.webSocketHandler())
-//                                .requestHandler(router)
-//                                .rxListen(this.port))
-//                .doOnSuccess(result -> LOGGER.debug("Http Server has been started on port {}", this.port))
-//                .doOnSuccess(result -> rxVertx.setPeriodic(3000, this::handleTimer))
-//                .doOnError(throwable -> LOGGER.error("Something went wrong while starting the HTTP server"))
-//                .doOnError(throwable -> throwable.printStackTrace())
-//                .subscribe(result ->
-//                                future.complete(),
-//                        throwable -> future.fail(throwable));
+        Router router = Router.router(vertx);
+        Router subRouter = Router.router(vertx);
+        subRouter.route(HttpMethod.GET, "/standings").handler(this::competitionHandler);
+        router.mountSubRouter("/api", subRouter);
 
         this.vertx
                 .createHttpServer(new HttpServerOptions().setWebsocketSubProtocols("v10.stomp, v11.stomp, v12.stomp"))
@@ -88,8 +73,8 @@ public class HttpServerVerticle extends AbstractVerticle {
         LOGGER.debug("Publishing something to the stomp address...");
         rxVertx
                 .eventBus()
-                .publish("update.standings",
-                        new JsonObject().put("test", "test contents"), new DeliveryOptions().addHeader("foo", "bar"));
+                .publish(UPDATE_STOMP_DESTINATION,
+                        new JsonObject().put("test", "test contents"), new DeliveryOptions().addHeader("destination", "update.standings"));
     }
 
     private void competitionHandler(RoutingContext routingContext) {
