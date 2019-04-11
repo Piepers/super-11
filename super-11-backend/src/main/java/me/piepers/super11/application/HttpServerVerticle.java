@@ -1,9 +1,9 @@
 package me.piepers.super11.application;
 
+import io.reactivex.Single;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonArray;
@@ -71,19 +71,18 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     private void handleTimer(Long timerId) {
         LOGGER.debug("Publishing something to the stomp address...");
-        rxVertx
-                .eventBus()
-                .publish(UPDATE_STOMP_DESTINATION,
-                        new JsonObject().put("test", "test contents"), new DeliveryOptions().addHeader("destination", "update.standings"));
+        this
+                .getLatestStandings()
+                .doOnError(throwable -> throwable.printStackTrace())
+                .subscribe(result -> rxVertx
+                                .eventBus()
+                                .publish(UPDATE_STOMP_DESTINATION,
+                                        result.encode()),
+                        throwable -> LOGGER.error("Unable to get the latest standings at this time.", throwable));
     }
 
     private void competitionHandler(RoutingContext routingContext) {
-        vertx
-                .eventBus()
-                .<JsonObject>rxSend("get.competition", new JsonObject())
-                .map(result -> new Competition(result.body()))
-                .map(competition -> competition.getData().getDrafts().stream().map(draft -> StandingsDto.from(draft)).collect(Collectors.toList()))
-                .map(list -> new JsonObject().put("drafts", new JsonArray(list)))
+        this.getLatestStandings()
                 .subscribe(result -> routingContext
                                 .response()
                                 .setStatusCode(200)
@@ -98,5 +97,14 @@ public class HttpServerVerticle extends AbstractVerticle {
                                 .end(new JsonObject().put("Error", throwable
                                         .getMessage())
                                         .encode(), StandardCharsets.UTF_8.name()));
+    }
+
+    private Single<JsonObject> getLatestStandings() {
+        return vertx
+                .eventBus()
+                .<JsonObject>rxSend("get.competition", new JsonObject())
+                .map(result -> new Competition(result.body()))
+                .map(competition -> competition.getData().getDrafts().stream().map(draft -> StandingsDto.from(draft)).collect(Collectors.toList()))
+                .map(list -> new JsonObject().put("drafts", new JsonArray(list)));
     }
 }

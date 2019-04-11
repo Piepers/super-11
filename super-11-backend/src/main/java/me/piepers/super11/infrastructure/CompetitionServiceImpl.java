@@ -14,7 +14,6 @@ import io.vertx.reactivex.ext.web.client.HttpRequest;
 import io.vertx.reactivex.ext.web.client.HttpResponse;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import io.vertx.serviceproxy.ServiceException;
-import me.piepers.super11.domain.AuthRequestBody;
 import me.piepers.super11.domain.Competition;
 import me.piepers.super11.domain.CompetitionService;
 import org.jsoup.Jsoup;

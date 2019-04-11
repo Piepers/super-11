@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Objects;
 
 /**
- * A prototype that holds a cache with the standings of our competition. Updated once after a game round and once
- * every hour during a game round.
+ * A prototype that holds a cache with the standings of our competition. Takes care of caching lookup data and schedules
+ * to determine in what frequency the standings of our league needs to be polled.
  *
  * @author Bas Piepers
  */
@@ -23,8 +23,14 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
     private static final Integer TWO_HOURS = 1000 * 3600;
 
+    private static final Integer TWENTY_FOUR_HOURS = 1000 * 3600 * 24;
+
     // The cached "competition" which is the standings of our league. Is updated by a timer so reads may be "dirty".
     private Competition competition;
+
+    // TODO: put this in configuration - also needs the X-Client-Game in the header and the X-Game-Group
+    private static final String PROGRAM_URL = "https://gameapi.chromasports.com/fixtures/next-game-periods";
+
 
     private io.vertx.reactivex.core.Vertx rxVertx;
     private CompetitionService competitionService;
@@ -59,13 +65,19 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
                 });
     }
 
+    // TODO: would be nice if we could use a cron-tab style kind of timing so that it occurs once every night or something.
+    private void handleDailyLookups(Long timerId) {
+        LOGGER.debug("Handling daily lookups...");
+
+    }
+
     private void handleTimer(Long timerId) {
         LOGGER.debug("Timer triggered with id {}", timerId);
 
         // Populate/update the competition object with the contents from the api.
         competitionService
                 .rxFetchLatestCompetitionStandings()
-                .doOnSuccess(competition -> LOGGER.debug("Pusblishing updated competition to the event bus..."))
+                .doOnSuccess(competition -> LOGGER.debug("Publishing updated competition to the event bus..."))
                 .doOnSuccess(competition -> vertx.eventBus().publish("competition.update", competition))
                 .subscribe(competition -> this.competition = competition,
                         throwable -> LOGGER.error("Unable to fetch competition data."));

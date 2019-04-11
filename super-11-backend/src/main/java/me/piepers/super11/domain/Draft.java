@@ -20,7 +20,6 @@ public class Draft {
     private final Integer points;
     private final Integer previousPoints;
     private final Integer previousRank;
-    //    private final String managerName;
     private final Boolean isEmpty;
     private final String avatarUrl;
     private final Boolean highLight;
@@ -35,7 +34,6 @@ public class Draft {
         this.points = jsonObject.getInteger("points");
         this.previousPoints = jsonObject.getInteger("previousPoints");
         this.previousRank = jsonObject.getInteger("previousRank");
-//        this.managerName = jsonObject.getString("managerName");
         this.isEmpty = jsonObject.getBoolean("isEmpty");
         this.avatarUrl = jsonObject.getString("avatarUrl");
         this.highLight = jsonObject.getBoolean("highLight");

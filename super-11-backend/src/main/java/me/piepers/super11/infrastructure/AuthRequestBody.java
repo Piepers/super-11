@@ -1,13 +1,14 @@
-package me.piepers.super11.domain;
+package me.piepers.super11.infrastructure;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
+import me.piepers.super11.domain.JsonDomainObject;
 
 import java.util.Base64;
 
 /**
- * The body that is issued with the first request of the OAuth flow.
+ * Helper class that represents the body that is issued with the first request of the OAuth flow.
  *
  * @author Bas Piepers
  */

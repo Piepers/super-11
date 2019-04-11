@@ -26,11 +26,10 @@ public interface CompetitionService {
         return new CompetitionServiceVertxEBProxy(vertx, EVENT_BUS_ADDRESS);
     }
 
-    /**
-     * Fetches the latest competition standings from the Profcoach API so that it can be updated in our cache.
+
+    /*** Fetches the latest competition standings from the Profcoach API so that it can be updated in our cache.
      *
      * @param result, the ayns-result of the update
      */
-
     void fetchLatestCompetitionStandings(Handler<AsyncResult<Competition>> result);
 }
