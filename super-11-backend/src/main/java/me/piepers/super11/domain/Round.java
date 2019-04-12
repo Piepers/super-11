@@ -8,25 +8,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * A minimalistic representation of a period with matches and teams.
+ * A minimalistic representation of a round with matches and teams.
  *
  * @author Bas Piepers
  */
 @DataObject
-public class Period implements JsonDomainObject {
+public class Round implements JsonDomainObject {
     private final int round;
     private final Instant scheduledStartTime;
     private final Instant scheduledEndTime;
     private final List<Match> matches;
 
-    private Period(int round, Instant scheduledStartTime, Instant scheduledEndTime, List<Match> matches) {
+    private Round(int round, Instant scheduledStartTime, Instant scheduledEndTime, List<Match> matches) {
         this.round = round;
         this.scheduledStartTime = scheduledStartTime;
         this.scheduledEndTime = scheduledEndTime;
         this.matches = matches;
     }
 
-    public Period(JsonObject jsonObject) {
+    public Round(JsonObject jsonObject) {
         this.round = jsonObject.getInteger("round");
         this.scheduledStartTime = jsonObject.getInstant("scheduledStartTime");
         this.scheduledEndTime = jsonObject.getInstant("scheduledEndTime");
@@ -58,7 +58,7 @@ public class Period implements JsonDomainObject {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Period period = (Period) o;
+        Round period = (Round) o;
 
         if (round != period.round) return false;
         if (!scheduledStartTime.equals(period.scheduledStartTime)) return false;

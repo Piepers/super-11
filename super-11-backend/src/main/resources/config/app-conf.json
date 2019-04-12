@@ -1,5 +1,9 @@
 {
   "http_server": {
     "port": 8080
+  },
+  "standings": {
+    "local_storage_path": "/var/super-11",
+    "season_file_name": "season.json"
   }
 }

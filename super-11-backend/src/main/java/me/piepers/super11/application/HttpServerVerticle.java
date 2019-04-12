@@ -22,11 +22,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class HttpServerVerticle extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpServerVerticle.class);
+    private static final int DEFAULT_HTTP_PORT = 8080;
     private int port;
     private io.vertx.reactivex.core.Vertx rxVertx;
     public static final String UPDATE_STOMP_DESTINATION = "update-standings";
@@ -35,7 +37,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
         this.rxVertx = new io.vertx.reactivex.core.Vertx(vertx);
-        this.port = 8080;
+        JsonObject httpServerConfig = context.config().getJsonObject("http_server");
+        int port = Objects.nonNull(httpServerConfig) ? httpServerConfig.getInteger("port", DEFAULT_HTTP_PORT) : DEFAULT_HTTP_PORT;
+        LOGGER.debug("Working with port number: {}. Configuration contained: {}", Objects.nonNull(httpServerConfig) ? httpServerConfig.getInteger("port", 0) : "Nothing", httpServerConfig.encodePrettily());
+        this.port = port;
     }
 
     @Override
