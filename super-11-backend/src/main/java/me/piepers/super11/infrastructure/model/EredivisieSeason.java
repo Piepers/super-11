@@ -18,21 +18,15 @@ import java.util.stream.Collectors;
  * @author Bas Piepers
  */
 @DataObject
-public class Season {
-    private final Instant lastChecked;
-    private final List<Round> rounds;
+public class EredivisieSeason {
+    private final List<EredivisieRound> rounds;
 
-    public Season(JsonObject jsonObject) {
-        this.lastChecked = jsonObject.getInstant("lastChecked");
-        this.rounds = jsonObject.getJsonArray("rounds").stream().map(o -> new Round((JsonObject) o)).collect(Collectors.toList());
+    public EredivisieSeason(JsonObject jsonObject) {
+        this.rounds = jsonObject.getJsonArray("rounds").stream().map(o -> new EredivisieRound((JsonObject) o)).collect(Collectors.toList());
 
     }
 
-    public Instant getLastChecked() {
-        return lastChecked;
-    }
-
-    public List<Round> getRounds() {
+    public List<EredivisieRound> getRounds() {
         return rounds;
     }
 

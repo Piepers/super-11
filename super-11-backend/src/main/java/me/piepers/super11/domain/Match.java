@@ -15,24 +15,21 @@ public class Match implements JsonDomainObject {
     private final Team home;
     private final Team away;
     private final Instant scheduledStartTime;
-    private final Instant scheduledEndTime;
 
-    private Match(Team home, Team away, Instant scheduledStartTime, Instant scheduledEndTime) {
+    private Match(Team home, Team away, Instant scheduledStartTime) {
         this.home = home;
         this.away = away;
         this.scheduledStartTime = scheduledStartTime;
-        this.scheduledEndTime = scheduledEndTime;
     }
 
     public Match(JsonObject jsonObject) {
         this.home = new Team(jsonObject.getJsonObject("team"));
         this.away = new Team(jsonObject.getJsonObject("away"));
         this.scheduledStartTime = jsonObject.getInstant("scheduledStartTime");
-        this.scheduledEndTime = jsonObject.getInstant("scheduledEndTime");
     }
 
-    public static Match of(Team home, Team away, Instant scheduledStartTime, Instant scheduledEndTime) {
-        return new Match(home, away, scheduledStartTime, scheduledEndTime);
+    public static Match of(Team home, Team away, Instant scheduledStartTime) {
+        return new Match(home, away, scheduledStartTime);
     }
 
     public Team getHome() {
@@ -47,10 +44,6 @@ public class Match implements JsonDomainObject {
         return scheduledStartTime;
     }
 
-    public Instant getScheduledEndTime() {
-        return scheduledEndTime;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -60,8 +53,7 @@ public class Match implements JsonDomainObject {
 
         if (!home.equals(match.home)) return false;
         if (!away.equals(match.away)) return false;
-        if (!scheduledStartTime.equals(match.scheduledStartTime)) return false;
-        return scheduledEndTime.equals(match.scheduledEndTime);
+        return scheduledStartTime.equals(match.scheduledStartTime);
 
     }
 
@@ -70,7 +62,6 @@ public class Match implements JsonDomainObject {
         int result = home.hashCode();
         result = 31 * result + away.hashCode();
         result = 31 * result + scheduledStartTime.hashCode();
-        result = 31 * result + scheduledEndTime.hashCode();
         return result;
     }
 
@@ -80,7 +71,6 @@ public class Match implements JsonDomainObject {
                 "home=" + home +
                 ", away=" + away +
                 ", scheduledStartTime=" + scheduledStartTime +
-                ", scheduledEndTime=" + scheduledEndTime +
                 '}';
     }
 }

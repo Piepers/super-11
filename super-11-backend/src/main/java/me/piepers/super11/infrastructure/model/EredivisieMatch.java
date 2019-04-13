@@ -12,7 +12,7 @@ import java.util.Objects;
  * @author Bas Piepers
  */
 @DataObject
-public class Match {
+public class EredivisieMatch {
     private final String gameId;
     private String venue;
     private String dateLong;
@@ -38,7 +38,7 @@ public class Match {
     private Integer team1GoalsConceded;
     private Integer team2GoalsConceded;
 
-    public Match(JsonObject jsonObject) {
+    public EredivisieMatch(JsonObject jsonObject) {
         this.gameId = jsonObject.getString("gameId");
         this.venue = Objects.nonNull(jsonObject.getString("venue")) ? jsonObject.getString("venue") : null;
         this.dateLong = Objects.nonNull(jsonObject.getString("dateLong")) ? jsonObject.getString("dateLong") : null;
@@ -166,7 +166,7 @@ public class Match {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Match match = (Match) o;
+        EredivisieMatch match = (EredivisieMatch) o;
 
         return gameId.equals(match.gameId);
 

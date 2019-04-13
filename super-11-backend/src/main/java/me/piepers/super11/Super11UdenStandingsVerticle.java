@@ -12,7 +12,7 @@ import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import me.piepers.super11.domain.Competition;
-import me.piepers.super11.infrastructure.model.Season;
+import me.piepers.super11.infrastructure.model.EredivisieSeason;
 import me.piepers.super11.reactivex.domain.CompetitionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     // The cached "competition" which is the standings of our league. Is updated by a timer so reads may be "dirty".
     private Competition competition;
     // The cached season which is retrieved from a file and updated daily.
-    private Season season;
+    private EredivisieSeason season;
 
     private io.vertx.reactivex.core.Vertx rxVertx;
     private CompetitionService competitionService;
@@ -109,7 +109,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     }
 
     // TODO: handle error situations better.
-    private void writeSeasonToFile(Season season) {
+    private void writeSeasonToFile(EredivisieSeason season) {
         LOGGER.debug("Writing season to file {}, overwriting existing file.", storagePath + seasonFile);
         vertx
                 .fileSystem()
@@ -119,18 +119,18 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
     }
 
-    private Single<Season> readSeasonFromFile() {
+    private Single<EredivisieSeason> readSeasonFromFile() {
         return
                 vertx
                         .fileSystem()
                         .rxReadFile(storagePath + seasonFile)
                         .doOnSuccess(buffer -> LOGGER.debug("Successfully read contents from file."))
                         .flatMap(buffer -> Single
-                                .just(new Season(buffer
+                                .just(new EredivisieSeason(buffer
                                         .toJsonObject())));
     }
 
-    private Single<Season> fetchSeasonFromApi() {
+    private Single<EredivisieSeason> fetchSeasonFromApi() {
         return WebClient
                 .create(vertx, new WebClientOptions())
                 // TODO: make the urls etc configurable.
@@ -148,7 +148,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
                         JsonObject jsonObject = new JsonObject()
                                 .put("lastChecked", Instant.now())
                                 .put("rounds", jsonArray);
-                        Season season = new Season(jsonObject);
+                        EredivisieSeason season = new EredivisieSeason(jsonObject);
                         return Single.just(season);
                     } else {
                         return Single.error(new Exception("Something went wrong while requesting new season information from the api. Site code: " + response.statusCode()));

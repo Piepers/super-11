@@ -15,21 +15,21 @@ import java.util.stream.Collectors;
  * @author Bas Piepers
  */
 @DataObject
-public class Round {
+public class EredivisieRound {
     private final String round;
     private final String title;
     private final String fromto;
     private String active;
     private final String enddate;
-    private final List<Match> matches;
+    private final List<EredivisieMatch> matches;
 
-    public Round(JsonObject jsonObject) {
+    public EredivisieRound(JsonObject jsonObject) {
         this.round = jsonObject.getString("round");
         this.title = jsonObject.getString("title");
         this.fromto = jsonObject.getString("fromto");
         this.active = Objects.nonNull("active") ? jsonObject.getString("active") : null;
         this.enddate = jsonObject.getString("enddate");
-        this.matches = jsonObject.getJsonArray("matches").stream().map(o -> new Match((JsonObject) o)).collect(Collectors.toUnmodifiableList());
+        this.matches = jsonObject.getJsonArray("matches").stream().map(o -> new EredivisieMatch((JsonObject) o)).collect(Collectors.toUnmodifiableList());
     }
 
     public String getRound() {
@@ -52,7 +52,7 @@ public class Round {
         return enddate;
     }
 
-    public List<Match> getMatches() {
+    public List<EredivisieMatch> getMatches() {
         return matches;
     }
 
@@ -61,7 +61,7 @@ public class Round {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Round round1 = (Round) o;
+        EredivisieRound round1 = (EredivisieRound) o;
 
         if (!round.equals(round1.round)) return false;
         return enddate.equals(round1.enddate);
