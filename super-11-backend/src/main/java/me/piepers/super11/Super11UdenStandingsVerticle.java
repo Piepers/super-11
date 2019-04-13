@@ -12,6 +12,7 @@ import io.vertx.reactivex.core.AbstractVerticle;
 import io.vertx.reactivex.core.buffer.Buffer;
 import io.vertx.reactivex.ext.web.client.WebClient;
 import me.piepers.super11.domain.Competition;
+import me.piepers.super11.domain.Season;
 import me.piepers.super11.infrastructure.model.EredivisieSeason;
 import me.piepers.super11.reactivex.domain.CompetitionService;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     // The cached "competition" which is the standings of our league. Is updated by a timer so reads may be "dirty".
     private Competition competition;
     // The cached season which is retrieved from a file and updated daily.
-    private EredivisieSeason season;
+    private Season season;
 
     private io.vertx.reactivex.core.Vertx rxVertx;
     private CompetitionService competitionService;
@@ -90,6 +91,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
                         return this.readSeasonFromFile();
                     } else {
                         return this.fetchSeasonFromApi()
+                                .map(eredivisieSeason -> Season.from(eredivisieSeason))
                                 .doOnSuccess(season -> this.writeSeasonToFile(season));
                     }
                 })
@@ -109,7 +111,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     }
 
     // TODO: handle error situations better.
-    private void writeSeasonToFile(EredivisieSeason season) {
+    private void writeSeasonToFile(Season season) {
         LOGGER.debug("Writing season to file {}, overwriting existing file.", storagePath + seasonFile);
         vertx
                 .fileSystem()
@@ -119,14 +121,14 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
     }
 
-    private Single<EredivisieSeason> readSeasonFromFile() {
+    private Single<Season> readSeasonFromFile() {
         return
                 vertx
                         .fileSystem()
                         .rxReadFile(storagePath + seasonFile)
                         .doOnSuccess(buffer -> LOGGER.debug("Successfully read contents from file."))
                         .flatMap(buffer -> Single
-                                .just(new EredivisieSeason(buffer
+                                .just(new Season(buffer
                                         .toJsonObject())));
     }
 
@@ -161,9 +163,11 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     private void handleDailyLookups(Long timerId) {
         LOGGER.debug("Handling daily lookups with timer id: {}", timerId);
         this.fetchSeasonFromApi()
+                .map(eredivisieSeason -> Season.from(eredivisieSeason))
                 .doOnSuccess(season -> this.writeSeasonToFile(season))
                 .doOnError(throwable -> throwable.printStackTrace())
-                .subscribe(season -> this.season = season, throwable -> LOGGER.error("Unable to update the season contents", throwable));
+                .subscribe(season -> this.season = season,
+                        throwable -> LOGGER.error("Unable to update the season contents", throwable));
 
     }
 
