@@ -27,8 +27,7 @@
     var url = "ws://localhost:8080/stomp";
     var client = Stomp.client(url);
     var callback = function(frame) {
-        console.log("Received a frame: " + frame);
-        console.log("The body of the frame is: " + frame.body);
+        console.log("Received competition update: " + frame.body);
         let data = frame.body.json();
         processData(data);
     };

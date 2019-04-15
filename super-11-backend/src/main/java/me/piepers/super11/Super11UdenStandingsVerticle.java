@@ -34,6 +34,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     private static final String DEFAULT_STORAGE_PATH = "/var/super-11/";
     private static final String DEFAULT_SEASON_STORAGE_FILE_NAME = "season.json";
     private static final Integer FIVE_MINUTES = 1000 * 300;
+    private static final Integer FIFTEEN_MINUTES = 1000 * 900;
     private static final Integer ONE_HOUR = 1000 * 3600;
     private static final Integer TWENTY_FOUR_HOURS = 1000 * 3600 * 24;
 
@@ -67,7 +68,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
         LOGGER.debug("Using storage path/file: {}{}", this.storagePath, this.seasonFile);
 
-        rxVertx.setPeriodic(ONE_HOUR, this::handleHourlyTimer);
+        rxVertx.setPeriodic(FIFTEEN_MINUTES, this::handleFifteenMinutesTimer);
         rxVertx.setPeriodic(TWENTY_FOUR_HOURS, this::handleDailyLookups);
     }
 
@@ -147,7 +148,6 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
                 .putHeader("Accept", "application/json")
                 .ssl(true)
                 .rxSend()
-                .doOnSuccess(response -> LOGGER.debug("Received response with code: {} and body:\n{}", response.statusCode(), response.bodyAsString()))
                 .flatMap(response -> {
                     if (response.statusCode() == 200) {
                         JsonArray jsonArray = new JsonArray(response.bodyAsString());
@@ -175,7 +175,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
     }
 
-    private void handleHourlyTimer(Long timerId) {
+    private void handleFifteenMinutesTimer(Long timerId) {
         LOGGER.debug("Timer triggered with id {}", timerId);
         this.checkAndStartCompetitionPolling();
     }
