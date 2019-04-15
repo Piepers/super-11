@@ -1,12 +1,18 @@
 package me.piepers.super11.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import me.piepers.super11.infrastructure.model.EredivisieSeason;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -16,6 +22,7 @@ import java.util.stream.Collectors;
  */
 @DataObject
 public class Season implements JsonDomainObject {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Season.class);
     private final String name;
     private final String country;
     // The instant when this object was last updated with the latest content
@@ -68,6 +75,50 @@ public class Season implements JsonDomainObject {
 
     public List<Round> getRounds() {
         return rounds;
+    }
+
+    @JsonIgnore
+    public boolean isMatchActiveNow() {
+        return this.isMatchActiveAt(Instant.now());
+    }
+
+    @JsonIgnore
+    public boolean isMatchActiveAt(Instant at) {
+        Optional<Round> round = this.rounds
+                .stream()
+                .filter(r -> at.isAfter(r.getScheduledStartTime()) && at.isBefore(r.getScheduledEndTime()))// Filter on round that is active
+                .findFirst();
+        if (round.isPresent()) {
+            return round.get()
+                    .getMatches()
+                    .stream()
+                    .filter(match -> at.isAfter(match.getScheduledStartTime()) && at.isBefore(match.getScheduledStartTime().plus(110, ChronoUnit.MINUTES)))
+                    .peek(match -> LOGGER.debug("Found matching match of {} - () with a start time of {} at time {}", match.getHome().getName(), match.getAway().getName(), match.getScheduledStartTime(), at))
+                    .findFirst()
+                    .isPresent();
+        } else {
+            return false;
+        }
+    }
+
+    public List<Match> whichMatchesAreActiveNow() {
+        return this.whichMatchesAreActiveAt(Instant.now());
+    }
+
+    public List<Match> whichMatchesAreActiveAt(Instant at) {
+        LOGGER.debug("Which matches are active at {}?", at.toString());
+        return this.rounds
+                .stream()
+                .filter(round -> at.isAfter(round.getScheduledStartTime()) && at.isBefore(round.getScheduledEndTime()))// Filter on round that is active and expect only one.
+                .findFirst()
+                .map(round -> round
+                        .getMatches()
+                        .stream()
+                        .filter(match -> at.isAfter(match.getScheduledStartTime()) && at.isBefore(match.getScheduledStartTime().plus(110, ChronoUnit.MINUTES)))// Assumption: a match is probably ended after 110 minutes.
+                        .peek(match -> LOGGER.debug("Found active match {} - {} because it started at {} and assumed end time of: {}", match.getHome().getName(), match.getAway().getName(), match.getScheduledStartTime().toString(), match.getScheduledStartTime().plus(110, ChronoUnit.MINUTES)))
+                        .collect(Collectors.toList()))
+                .orElse(Collections.emptyList());
+
     }
 
     @Override

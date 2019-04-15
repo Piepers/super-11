@@ -33,6 +33,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
     private static final String DEFAULT_STORAGE_PATH = "/var/super-11/";
     private static final String DEFAULT_SEASON_STORAGE_FILE_NAME = "season.json";
+    private static final Integer FIVE_MINUTES = 1000 * 300;
     private static final Integer TWO_HOURS = 1000 * 3600;
     private static final Integer TWENTY_FOUR_HOURS = 1000 * 3600 * 24;
 
@@ -53,7 +54,6 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
         this.rxVertx = new io.vertx.reactivex.core.Vertx(vertx);
         this.competitionService = CompetitionService.createProxy(rxVertx);
         JsonObject standingsConfig = context.config().getJsonObject("standings");
-        LOGGER.debug("Obtained standingsconfig: {}", Objects.nonNull(standingsConfig) ? standingsConfig.encodePrettily() : "no config was present...");
         if (Objects.nonNull(standingsConfig)) {
             String storagePath = standingsConfig.getString("local_storage_path", DEFAULT_STORAGE_PATH);
             String seasonFile = standingsConfig.getString("season_file_name", DEFAULT_SEASON_STORAGE_FILE_NAME);
@@ -74,7 +74,6 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
         // Cache a competition to begin with and cache/update the season contents.
         competitionService
                 .rxFetchLatestCompetitionStandings()
-                .doOnSuccess(competition -> LOGGER.debug("Competition read successfully. Contents:\n{}", competition.toJson().encodePrettily()))
                 .doOnSuccess(competition -> this.competition = competition)
                 .ignoreElement()
                 .andThen(rxVertx.fileSystem().rxExists(storagePath))
@@ -174,7 +173,16 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     private void handleTimer(Long timerId) {
         LOGGER.debug("Timer triggered with id {}", timerId);
 
+        // Determine whether we need to poll for competition standings.
+        boolean matchActive = this.season.isMatchActiveNow();
+        if (matchActive) {
+            // Start a timer to poll for competitionstandings on a very regular basis
+            LOGGER.debug("");
+        } else {
+            // If we were polling, stop that timer.
+        }
         // Populate/update the competition object with the contents from the api.
+
         competitionService
                 .rxFetchLatestCompetitionStandings()
                 .doOnSuccess(competition -> LOGGER.debug("Publishing updated competition to the event bus..."))
