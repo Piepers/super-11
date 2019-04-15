@@ -34,7 +34,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     private static final String DEFAULT_STORAGE_PATH = "/var/super-11/";
     private static final String DEFAULT_SEASON_STORAGE_FILE_NAME = "season.json";
     private static final Integer FIVE_MINUTES = 1000 * 300;
-    private static final Integer TWO_HOURS = 1000 * 3600;
+    private static final Integer ONE_HOUR = 1000 * 3600;
     private static final Integer TWENTY_FOUR_HOURS = 1000 * 3600 * 24;
 
     // The cached "competition" which is the standings of our league. Is updated by a timer so reads may be "dirty".
@@ -47,6 +47,8 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
     private String storagePath = DEFAULT_STORAGE_PATH;
     private String seasonFile = DEFAULT_SEASON_STORAGE_FILE_NAME;
+
+    private Long competitionPollTimerId = null;
 
     @Override
     public void init(Vertx vertx, Context context) {
@@ -65,7 +67,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
         LOGGER.debug("Using storage path/file: {}{}", this.storagePath, this.seasonFile);
 
-        rxVertx.setPeriodic(TWO_HOURS, this::handleTimer);
+        rxVertx.setPeriodic(ONE_HOUR, this::handleHourlyTimer);
         rxVertx.setPeriodic(TWENTY_FOUR_HOURS, this::handleDailyLookups);
     }
 
@@ -95,6 +97,8 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
                     }
                 })
                 .doOnSuccess(season -> this.season = season)
+                .doOnSuccess(season -> LOGGER.debug("Season read and updated. Check if we need to poll..."))
+                .doOnSuccess(season -> this.checkAndStartCompetitionPolling())
                 .subscribe(season -> future.complete(),
                         throwable -> future.fail(throwable));
 
@@ -107,6 +111,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
                         message.reply(this.competition.toJson());
                     }
                 });
+
     }
 
     // TODO: handle error situations better.
@@ -170,19 +175,32 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
     }
 
-    private void handleTimer(Long timerId) {
+    private void handleHourlyTimer(Long timerId) {
         LOGGER.debug("Timer triggered with id {}", timerId);
+        this.checkAndStartCompetitionPolling();
+    }
 
+    private void checkAndStartCompetitionPolling() {
         // Determine whether we need to poll for competition standings.
         boolean matchActive = this.season.isMatchActiveNow();
-        if (matchActive) {
+        if (matchActive && Objects.isNull(this.competitionPollTimerId)) {
             // Start a timer to poll for competitionstandings on a very regular basis
-            LOGGER.debug("");
+            LOGGER.debug("A match is currently active and we're not polling yet, start a polling action with an interval of {}.", FIVE_MINUTES);
+            this.competitionPollTimerId = rxVertx.setPeriodic(FIVE_MINUTES, this::handleCompetitionLookupTimer);
         } else {
             // If we were polling, stop that timer.
+            LOGGER.debug("There is currently no competition active. We have a poller active: {}", Objects.nonNull(this.competitionPollTimerId) ? "yes (" + this.competitionPollTimerId + ")." : "no.");
+            if (Objects.nonNull(this.competitionPollTimerId)) {
+                boolean result = rxVertx.cancelTimer(this.competitionPollTimerId);
+                LOGGER.debug("Timer stopped successfully: {}", result ? "yes" : "NO!");
+            }
         }
-        // Populate/update the competition object with the contents from the api.
+    }
 
+    private void handleCompetitionLookupTimer(Long timerId) {
+        LOGGER.debug("Polling for latest competition standings (id: {})", timerId);
+
+        // Populate/update the competition object with the contents from the api.
         competitionService
                 .rxFetchLatestCompetitionStandings()
                 .doOnSuccess(competition -> LOGGER.debug("Publishing updated competition to the event bus..."))

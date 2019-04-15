@@ -12,6 +12,7 @@ import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.stomp.BridgeOptions;
 import io.vertx.ext.stomp.StompServerOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
+import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.ext.stomp.StompServer;
 import io.vertx.reactivex.ext.stomp.StompServerHandler;
 import io.vertx.reactivex.ext.web.Router;
@@ -68,22 +69,18 @@ public class HttpServerVerticle extends AbstractVerticle {
                 .requestHandler(router)
                 .rxListen(this.port)
                 .doOnSuccess(result -> LOGGER.debug("Http Server has been started on port {}", this.port))
-                .doOnSuccess(result -> rxVertx.setPeriodic(3000, this::handleTimer))
+                .doOnSuccess(result -> rxVertx.eventBus().<JsonObject>consumer("competition.update", this::handleCompetitionUpdate))// Start a consumer that publishes the competition standings on the stomp address when it is updated by the standingsverticle.
                 .subscribe(result ->
                                 future.complete(),
                         throwable -> future.fail(throwable));
     }
 
-    private void handleTimer(Long timerId) {
-        LOGGER.debug("Publishing something to the stomp address...");
-        this
-                .getLatestStandings()
-                .doOnError(throwable -> throwable.printStackTrace())
-                .subscribe(result -> rxVertx
-                                .eventBus()
-                                .publish(UPDATE_STOMP_DESTINATION,
-                                        result.encode()),
-                        throwable -> LOGGER.error("Unable to get the latest standings at this time.", throwable));
+    private void handleCompetitionUpdate(Message<JsonObject> competitionUpdate) {
+        LOGGER.debug("Received a new update from the standings verticle. Publishing that to the event bus.");
+        JsonObject jsonObject = competitionUpdate.body();
+        rxVertx
+                .eventBus()
+                .publish(UPDATE_STOMP_DESTINATION, jsonObject.encode());
     }
 
     private void competitionHandler(RoutingContext routingContext) {

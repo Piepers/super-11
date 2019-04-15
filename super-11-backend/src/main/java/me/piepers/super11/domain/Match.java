@@ -2,6 +2,8 @@ package me.piepers.super11.domain;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 
@@ -23,7 +25,7 @@ public class Match implements JsonDomainObject {
     }
 
     public Match(JsonObject jsonObject) {
-        this.home = new Team(jsonObject.getJsonObject("team"));
+        this.home = new Team(jsonObject.getJsonObject("home"));
         this.away = new Team(jsonObject.getJsonObject("away"));
         this.scheduledStartTime = jsonObject.getInstant("scheduledStartTime");
     }

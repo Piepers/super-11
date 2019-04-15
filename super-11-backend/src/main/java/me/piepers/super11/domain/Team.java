@@ -2,6 +2,8 @@ package me.piepers.super11.domain;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.json.JsonObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Minimalistic representation of a team in the competition, mainly to determine whether a match is currently being

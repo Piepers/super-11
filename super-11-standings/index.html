@@ -29,6 +29,8 @@
     var callback = function(frame) {
         console.log("Received a frame: " + frame);
         console.log("The body of the frame is: " + frame.body);
+        let data = frame.body.json();
+        processData(data);
     };
 
     client.connect({}, function() {

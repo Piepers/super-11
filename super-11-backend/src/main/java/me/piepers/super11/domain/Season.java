@@ -33,7 +33,10 @@ public class Season implements JsonDomainObject {
         this.name = jsonObject.getString("name");
         this.country = jsonObject.getString("country");
         this.lastUpdated = jsonObject.getInstant("lastUpdated", Instant.now());
-        this.rounds = jsonObject.getJsonArray("rounds", new JsonArray()).stream().map(o -> new Round((JsonObject) o)).collect(Collectors.toList());
+        this.rounds = jsonObject.getJsonArray("rounds", new JsonArray())
+                .stream()
+                .map(o -> new Round((JsonObject) o))
+                .collect(Collectors.toList());
     }
 
     private Season(String name, String country, Instant lastUpdated, List<Round> rounds) {
