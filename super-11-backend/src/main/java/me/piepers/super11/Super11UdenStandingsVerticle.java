@@ -35,7 +35,6 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     private static final String DEFAULT_SEASON_STORAGE_FILE_NAME = "season.json";
     private static final Integer FIVE_MINUTES = 1000 * 300;
     private static final Integer FIFTEEN_MINUTES = 1000 * 900;
-    private static final Integer ONE_HOUR = 1000 * 3600;
     private static final Integer TWENTY_FOUR_HOURS = 1000 * 3600 * 24;
 
     // The cached "competition" which is the standings of our league. Is updated by a timer so reads may be "dirty".

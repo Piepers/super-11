@@ -39,6 +39,10 @@ th, td {
     padding: 10px;
 }
 
+.sortable {
+    cursor: pointer;
+}
+
 article {
     overflow-x: auto;
 }
