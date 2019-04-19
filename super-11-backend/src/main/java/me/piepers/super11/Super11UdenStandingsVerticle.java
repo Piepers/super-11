@@ -33,7 +33,7 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
 
     private static final String DEFAULT_STORAGE_PATH = "/var/super-11/";
     private static final String DEFAULT_SEASON_STORAGE_FILE_NAME = "season.json";
-    private static final Integer FIVE_MINUTES = 1000 * 300;
+    private static final Integer THREE_MINUTES = 1000 * 180;
     private static final Integer FIFTEEN_MINUTES = 1000 * 900;
     private static final Integer TWENTY_FOUR_HOURS = 1000 * 3600 * 24;
 
@@ -182,10 +182,13 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
     private void checkAndStartCompetitionPolling() {
         // Determine whether we need to poll for competition standings.
         boolean matchActive = this.season.isMatchActiveNow();
-        if (matchActive && Objects.isNull(this.competitionPollTimerId)) {
-            // Start a timer to poll for competitionstandings on a very regular basis
-            LOGGER.debug("A match is currently active and we're not polling yet, start a polling action with an interval of {}.", FIVE_MINUTES);
-            this.competitionPollTimerId = rxVertx.setPeriodic(FIVE_MINUTES, this::handleCompetitionLookupTimer);
+        if (matchActive) {
+            if (Objects.isNull(this.competitionPollTimerId)) {
+                LOGGER.debug("A match is active but no poller is active yet. Start a poller with an interval of {}", THREE_MINUTES);
+                this.competitionPollTimerId = rxVertx.setPeriodic(THREE_MINUTES, this::handleCompetitionLookupTimer);
+            } else {
+                LOGGER.debug("A match is active and there is already a poller active. Not starting a new one.");
+            }
         } else {
             // If we were polling, stop that timer.
             LOGGER.debug("There is currently no competition active. We have a poller active: {}", Objects.nonNull(this.competitionPollTimerId) ? "yes (" + this.competitionPollTimerId + ")." : "no.");
@@ -204,7 +207,8 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
                 .rxFetchLatestCompetitionStandings()
                 .doOnSuccess(competition -> LOGGER.debug("Publishing updated competition to the event bus..."))
                 .doOnSuccess(competition -> vertx.eventBus().publish("competition.update", competition))
+                .doOnError(throwable -> throwable.printStackTrace())
                 .subscribe(competition -> this.competition = competition,
-                        throwable -> LOGGER.error("Unable to fetch competition data."));
+                        throwable -> LOGGER.error("Unable to fetch competition data.", throwable));
     }
 }

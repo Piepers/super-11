@@ -96,7 +96,7 @@ public class Season implements JsonDomainObject {
                     .getMatches()
                     .stream()
                     .filter(match -> at.isAfter(match.getScheduledStartTime()) && at.isBefore(match.getScheduledStartTime().plus(110, ChronoUnit.MINUTES)))
-                    .peek(match -> LOGGER.debug("Found matching match of {} - () with a start time of {} at time {}", match.getHome().getName(), match.getAway().getName(), match.getScheduledStartTime(), at))
+                    .peek(match -> LOGGER.debug("Found match of {} - {} with a start time of {} at time {}", match.getHome().getName(), match.getAway().getName(), match.getScheduledStartTime(), at))
                     .findFirst()
                     .isPresent();
         } else {

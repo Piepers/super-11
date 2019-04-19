@@ -75,10 +75,6 @@ public class Draft {
         return previousRank;
     }
 
-//    public String getManagerName() {
-//        return managerName;
-//    }
-
     public Boolean getEmpty() {
         return isEmpty;
     }

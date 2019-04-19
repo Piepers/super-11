@@ -42,6 +42,12 @@ public class HttpServerVerticle extends AbstractVerticle {
         int port = Objects.nonNull(httpServerConfig) ? httpServerConfig.getInteger("port", DEFAULT_HTTP_PORT) : DEFAULT_HTTP_PORT;
         LOGGER.debug("Working with port number: {}. Configuration contained: {}", Objects.nonNull(httpServerConfig) ? httpServerConfig.getInteger("port", 0) : "Nothing", httpServerConfig.encodePrettily());
         this.port = port;
+
+        // Start a consumer that publishes the competition standings on the stomp address when it is updated by the standingsverticle.
+        rxVertx
+                .eventBus()
+                .consumer("competition.update",
+                        this::handleCompetitionUpdate);
     }
 
     @Override
@@ -69,7 +75,6 @@ public class HttpServerVerticle extends AbstractVerticle {
                 .requestHandler(router)
                 .rxListen(this.port)
                 .doOnSuccess(result -> LOGGER.debug("Http Server has been started on port {}", this.port))
-                .doOnSuccess(result -> rxVertx.eventBus().<JsonObject>consumer("competition.update", this::handleCompetitionUpdate))// Start a consumer that publishes the competition standings on the stomp address when it is updated by the standingsverticle.
                 .subscribe(result ->
                                 future.complete(),
                         throwable -> future.fail(throwable));
