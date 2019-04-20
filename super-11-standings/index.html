@@ -29,8 +29,8 @@
     let competitionData;
 
     let callback = function (frame) {
-        console.log("Received competition update: " + frame.body);
-        let data = frame.body.json();
+        console.log("Received update from backend. Updating table...")
+        let data = JSON.parse(frame.body);
         processData(data);
     };
 
@@ -116,7 +116,7 @@
             // Assume that we have to sort by total points.
             d.sort(getSortOrder("totalPoints"));
         }
-        let output="";
+        let output = "";
         // Process the data but just only set the internal data
         d.forEach(draft => {
             output += `<tr><td>${draft.rank}</td><td>${draft.draftName}</td><td>${draft.points}</td><td>${draft.totalPoints}</td></tr>`;

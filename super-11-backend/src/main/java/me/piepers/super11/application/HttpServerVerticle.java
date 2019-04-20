@@ -12,7 +12,6 @@ import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.stomp.BridgeOptions;
 import io.vertx.ext.stomp.StompServerOptions;
 import io.vertx.reactivex.core.AbstractVerticle;
-import io.vertx.reactivex.core.eventbus.Message;
 import io.vertx.reactivex.ext.stomp.StompServer;
 import io.vertx.reactivex.ext.stomp.StompServerHandler;
 import io.vertx.reactivex.ext.web.Router;
@@ -23,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -46,8 +46,11 @@ public class HttpServerVerticle extends AbstractVerticle {
         // Start a consumer that publishes the competition standings on the stomp address when it is updated by the standingsverticle.
         rxVertx
                 .eventBus()
-                .consumer("competition.update",
-                        this::handleCompetitionUpdate);
+                .<JsonObject>consumer("competition.update", message -> {
+                    JsonObject body = message.body();
+                    Competition competition = new Competition(body);
+                    this.handleCompetitionUpdate(competition);
+                });
     }
 
     @Override
@@ -80,12 +83,19 @@ public class HttpServerVerticle extends AbstractVerticle {
                         throwable -> future.fail(throwable));
     }
 
-    private void handleCompetitionUpdate(Message<JsonObject> competitionUpdate) {
+    private void handleCompetitionUpdate(Competition competition) {
         LOGGER.debug("Received a new update from the standings verticle. Publishing that to the event bus.");
-        JsonObject jsonObject = competitionUpdate.body();
+        // Map it to something we can publish to the UI.
+        List<JsonObject> result = competition
+                .getData()
+                .getDrafts()
+                .stream()
+                .map(draft -> StandingsDto.from(draft))
+                .map(standingsDto -> standingsDto.toJson())
+                .collect(Collectors.toList());
         rxVertx
                 .eventBus()
-                .publish(UPDATE_STOMP_DESTINATION, jsonObject.encode());
+                .publish(UPDATE_STOMP_DESTINATION, new JsonObject().put("drafts", new JsonArray(result)));
     }
 
     private void competitionHandler(RoutingContext routingContext) {
