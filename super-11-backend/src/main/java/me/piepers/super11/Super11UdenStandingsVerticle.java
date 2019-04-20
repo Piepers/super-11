@@ -195,6 +195,9 @@ public class Super11UdenStandingsVerticle extends AbstractVerticle {
             if (Objects.nonNull(this.competitionPollTimerId)) {
                 boolean result = rxVertx.cancelTimer(this.competitionPollTimerId);
                 LOGGER.debug("Timer stopped successfully: {}", result ? "yes" : "NO!");
+                if (result) {
+                    this.competitionPollTimerId = null;
+                }
             }
         }
     }
